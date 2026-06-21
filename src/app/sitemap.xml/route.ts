@@ -13,7 +13,18 @@ export async function GET() {
     prisma.category.findMany({ select: { slug: true, updatedAt: true } }),
   ]);
 
-  const staticPages = ["", "about", "contact", "privacy", "terms", "search"];
+  const staticPages = [
+    "",
+    "about",
+    "contact",
+    "privacy",
+    "terms",
+    "search",
+    "editorial-policy",
+    "disclaimer",
+    "cookie-policy",
+    "sitemap",
+  ];
 
   const urls = [
     ...staticPages.map((path) => ({

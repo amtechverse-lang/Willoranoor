@@ -15,7 +15,9 @@ export const postSchema = z.object({
   publishedAt: z.string().optional().nullable(),
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
+  focusKeyword: z.string().optional(),
   categoryId: z.string().min(1, "Category is required"),
+  tagNames: z.array(z.string()).default([]),
   tagIds: z.array(z.string()).default([]),
 });
 

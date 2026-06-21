@@ -77,7 +77,7 @@ export default function AdminPostsPage() {
       {isLoading ? (
         <p className="text-charcoal/60">Loading…</p>
       ) : (
-        <div className="rounded-lg border border-charcoal/10 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-charcoal/10 bg-white">
           <Table>
             <TableHeader>
               <TableRow>

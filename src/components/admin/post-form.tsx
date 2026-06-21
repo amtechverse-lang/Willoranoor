@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TipTapEditor } from "@/components/admin/tiptap-editor";
 import { Button } from "@/components/ui/button";
@@ -34,12 +34,15 @@ interface PostFormProps {
     published: boolean;
     metaTitle: string;
     metaDescription: string;
+    focusKeyword: string;
     categoryId: string;
+    tags: string;
   };
 }
 
 export function PostForm({ postId, initial }: PostFormProps) {
   const router = useRouter();
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState(initial?.title ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
@@ -51,6 +54,8 @@ export function PostForm({ postId, initial }: PostFormProps) {
   const [metaDescription, setMetaDescription] = useState(
     initial?.metaDescription ?? "",
   );
+  const [focusKeyword, setFocusKeyword] = useState(initial?.focusKeyword ?? "");
+  const [tags, setTags] = useState(initial?.tags ?? "");
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? "");
 
   const { data: categories = [] } = useQuery<Category[]>({
@@ -61,9 +66,23 @@ export function PostForm({ postId, initial }: PostFormProps) {
     },
   });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function uploadCover(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    if (!res.ok) {
+      const err = await res.json();
+      toast.error(err.error ?? "Upload failed");
+      return;
+    }
+    const { url } = await res.json();
+    setCoverImage(url);
+    toast.success("Cover image uploaded");
+  }
+
+  async function savePost(publish: boolean) {
     setLoading(true);
+    setPublished(publish);
 
     const payload = {
       title,
@@ -71,10 +90,15 @@ export function PostForm({ postId, initial }: PostFormProps) {
       excerpt,
       content,
       coverImage,
-      published,
+      published: publish,
       metaTitle,
       metaDescription,
+      focusKeyword,
       categoryId,
+      tagNames: tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
       tagIds: [] as string[],
     };
 
@@ -95,13 +119,19 @@ export function PostForm({ postId, initial }: PostFormProps) {
       return;
     }
 
-    toast.success(postId ? "Post updated" : "Post created");
+    toast.success(publish ? "Post published" : "Draft saved");
     router.push("/admin/posts");
     router.refresh();
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-4xl space-y-6">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        savePost(published);
+      }}
+      className="mx-auto max-w-4xl space-y-6"
+    >
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="title">Title</Label>
@@ -141,16 +171,37 @@ export function PostForm({ postId, initial }: PostFormProps) {
         <TipTapEditor content={content} onChange={setContent} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="coverImage">Cover Image URL</Label>
+      <div className="space-y-2">
+        <Label>Featured Image</Label>
+        <input
+          ref={coverInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) uploadCover(file);
+            e.target.value = "";
+          }}
+        />
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => coverInputRef.current?.click()}
+          >
+            Upload Image
+          </Button>
           <Input
-            id="coverImage"
             value={coverImage}
             onChange={(e) => setCoverImage(e.target.value)}
             placeholder="/uploads/image.webp"
+            className="max-w-md"
           />
         </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>Category</Label>
           <Select value={categoryId} onValueChange={setCategoryId} required>
@@ -166,6 +217,15 @@ export function PostForm({ postId, initial }: PostFormProps) {
             </SelectContent>
           </Select>
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="tags">Tags (comma-separated)</Label>
+          <Input
+            id="tags"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="minimalism, neutral tones"
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -178,30 +238,39 @@ export function PostForm({ postId, initial }: PostFormProps) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="metaDescription">SEO Description</Label>
-          <Textarea
-            id="metaDescription"
-            value={metaDescription}
-            onChange={(e) => setMetaDescription(e.target.value)}
-            rows={2}
+          <Label htmlFor="focusKeyword">Focus Keyword</Label>
+          <Input
+            id="focusKeyword"
+            value={focusKeyword}
+            onChange={(e) => setFocusKeyword(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="published"
-          checked={published}
-          onChange={(e) => setPublished(e.target.checked)}
-          className="h-4 w-4 rounded border-charcoal/20"
+      <div className="space-y-2">
+        <Label htmlFor="metaDescription">Meta Description</Label>
+        <Textarea
+          id="metaDescription"
+          value={metaDescription}
+          onChange={(e) => setMetaDescription(e.target.value)}
+          rows={2}
         />
-        <Label htmlFor="published">Publish immediately</Label>
       </div>
 
-      <div className="flex gap-3">
-        <Button type="submit" disabled={loading}>
-          {loading ? "Saving…" : postId ? "Update Post" : "Create Post"}
+      <div className="flex flex-wrap gap-3">
+        <Button
+          type="button"
+          disabled={loading}
+          onClick={() => savePost(false)}
+        >
+          {loading ? "Saving…" : "Save as Draft"}
+        </Button>
+        <Button
+          type="button"
+          disabled={loading}
+          onClick={() => savePost(true)}
+        >
+          {loading ? "Saving…" : "Publish"}
         </Button>
         <Button
           type="button"

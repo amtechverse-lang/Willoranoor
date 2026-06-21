@@ -1,6 +1,6 @@
 "use client";
 
-import { FaFacebook, FaLinkedin, FaPinterest, FaTwitter } from "react-icons/fa";
+import { FaFacebook, FaPinterest, FaTwitter, FaWhatsapp } from "react-icons/fa";
 
 interface ShareButtonsProps {
   url: string;
@@ -13,9 +13,9 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
 
   const links = [
     {
-      name: "Twitter",
-      href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-      icon: FaTwitter,
+      name: "Pinterest",
+      href: `https://pinterest.com/pin/create/button/?url=${encodedUrl}&description=${encodedTitle}`,
+      icon: FaPinterest,
     },
     {
       name: "Facebook",
@@ -23,19 +23,19 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
       icon: FaFacebook,
     },
     {
-      name: "Pinterest",
-      href: `https://pinterest.com/pin/create/button/?url=${encodedUrl}&description=${encodedTitle}`,
-      icon: FaPinterest,
+      name: "X",
+      href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+      icon: FaTwitter,
     },
     {
-      name: "LinkedIn",
-      href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-      icon: FaLinkedin,
+      name: "WhatsApp",
+      href: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
+      icon: FaWhatsapp,
     },
   ];
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       <span className="text-sm font-medium text-charcoal/60">Share:</span>
       {links.map((link) => (
         <a

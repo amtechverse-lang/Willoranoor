@@ -1,9 +1,19 @@
 @import "tailwindcss";
+@config "../../tailwind.config.ts";
 
 @theme inline {
+  --color-beige-50: #fdfaf6;
+  --color-beige-100: #f9f4ea;
+  --color-beige-200: #f0e6d3;
+  --color-beige-300: #e8dfd3;
   --color-beige: #f5f0e8;
   --color-beige-dark: #e8dfd3;
+  --color-charcoal-700: #3a3a3a;
+  --color-charcoal-800: #333333;
+  --color-charcoal-900: #2c2c2c;
   --color-charcoal: #2c2c2c;
+  --color-gold-500: #c9a96e;
+  --color-gold-600: #b8914d;
   --color-gold: #c9a962;
   --color-gold-light: #d4bc7e;
   --color-background: var(--color-beige);

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveTagIds } from "@/lib/tags";
 import { postSchema } from "@/lib/validations";
 import { NextResponse } from "next/server";
 
@@ -44,6 +45,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Slug already exists" }, { status: 409 });
   }
 
+  const tagIds = [
+    ...new Set([
+      ...data.tagIds,
+      ...(await resolveTagIds(data.tagNames)),
+    ]),
+  ];
+
   const post = await prisma.post.create({
     data: {
       title: data.title,
@@ -59,10 +67,11 @@ export async function POST(request: Request) {
         : null,
       metaTitle: data.metaTitle,
       metaDescription: data.metaDescription,
+      focusKeyword: data.focusKeyword,
       authorId: session.user.id,
       categoryId: data.categoryId,
       tags: {
-        create: data.tagIds.map((tagId) => ({ tagId })),
+        create: tagIds.map((tagId) => ({ tagId })),
       },
     },
     include: { category: true, tags: { include: { tag: true } } },

@@ -20,16 +20,16 @@ export function PostCard({ post, featured }: PostCardProps) {
     <article
       className={
         featured
-          ? "group grid gap-6 md:grid-cols-2 md:items-center"
-          : "group"
+          ? "group grid gap-6 transition-transform hover:scale-[1.01] md:grid-cols-2 md:items-center"
+          : "group transition-transform hover:scale-[1.02]"
       }
     >
       <Link
         href={`/article/${post.slug}`}
         className={
           featured
-            ? "relative aspect-[4/3] overflow-hidden rounded-lg shadow-elegant"
-            : "relative mb-4 block aspect-[16/10] overflow-hidden rounded-lg shadow-elegant"
+            ? "relative aspect-[4/3] overflow-hidden rounded-lg shadow-elegant transition-shadow group-hover:shadow-md"
+            : "relative mb-4 block aspect-[4/3] overflow-hidden rounded-lg shadow-elegant transition-shadow group-hover:shadow-md"
         }
       >
         {post.coverImage ? (

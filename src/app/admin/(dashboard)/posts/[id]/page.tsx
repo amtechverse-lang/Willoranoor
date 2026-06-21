@@ -37,7 +37,11 @@ export default function EditPostPage({
           published: post.published,
           metaTitle: post.metaTitle ?? "",
           metaDescription: post.metaDescription ?? "",
+          focusKeyword: post.focusKeyword ?? "",
           categoryId: post.categoryId,
+          tags: (post.tags ?? [])
+            .map((t: { tag: { name: string } }) => t.tag.name)
+            .join(", "),
         }}
       />
     </div>

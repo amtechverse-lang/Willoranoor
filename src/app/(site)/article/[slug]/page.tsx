@@ -1,9 +1,14 @@
 import Image from "next/image";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Script from "next/script";
+import { ArticleBreadcrumb } from "@/components/site/article-breadcrumb";
+import { RelatedPosts } from "@/components/site/related-posts";
 import { ShareButtons } from "@/components/site/share-buttons";
 import { TableOfContents } from "@/components/site/table-of-contents";
+import { ViewCounter } from "@/components/site/view-counter";
 import { Badge } from "@/components/ui/badge";
+import { extractFaqFromHtml, getReadingTimeMinutes } from "@/lib/article";
 import { prisma } from "@/lib/prisma";
 import { processArticleContent } from "@/lib/sanitize";
 import { getSettings } from "@/lib/settings";
@@ -56,9 +61,11 @@ export default async function ArticlePage({ params }: PageProps) {
 
   const settings = await getSettings();
   const siteUrl = settings.siteUrl || "http://localhost:3000";
-  const { html, toc } = processArticleContent(post.content);
+  const { html: processedHtml, toc } = processArticleContent(post.content);
+  const { html, faq } = extractFaqFromHtml(processedHtml);
+  const readingTime = getReadingTimeMinutes(post.content);
 
-  const jsonLd = {
+  const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: post.title,
@@ -68,7 +75,7 @@ export default async function ArticlePage({ params }: PageProps) {
     dateModified: post.updatedAt.toISOString(),
     author: {
       "@type": "Person",
-      name: post.author.name || "WilloraNoor",
+      name: post.author.name || "WilloraNoor Editorial Team",
     },
     publisher: {
       "@type": "Organization",
@@ -81,12 +88,70 @@ export default async function ArticlePage({ params }: PageProps) {
     mainEntityOfPage: `${siteUrl}/article/${post.slug}`,
   };
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: siteUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: post.category.name,
+        item: `${siteUrl}/category/${post.category.slug}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: post.title,
+        item: `${siteUrl}/article/${post.slug}`,
+      },
+    ],
+  };
+
+  const faqJsonLd =
+    faq.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faq.map((item) => ({
+            "@type": "Question",
+            name: item.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: item.answer,
+            },
+          })),
+        }
+      : null;
+
   return (
     <article className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <script
+      <ViewCounter postId={post.id} />
+
+      <Script
+        id="article-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
       />
+      <Script
+        id="breadcrumb-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      {faqJsonLd && (
+        <Script
+          id="faq-jsonld"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      )}
+
+      <ArticleBreadcrumb category={post.category} title={post.title} />
 
       <header className="mx-auto max-w-3xl text-center">
         <Badge variant="secondary">{post.category.name}</Badge>
@@ -97,8 +162,14 @@ export default async function ArticlePage({ params }: PageProps) {
           <p className="mt-4 text-lg text-charcoal/70">{post.excerpt}</p>
         )}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-charcoal/50">
-          {post.author.name && <span>By {post.author.name}</span>}
-          <time>{formatDate(post.publishedAt)}</time>
+          <span>WilloraNoor Editorial Team</span>
+          <time dateTime={post.publishedAt?.toISOString()}>
+            {formatDate(post.publishedAt)}
+          </time>
+          {post.updatedAt > (post.publishedAt ?? post.createdAt) && (
+            <span>Updated {formatDate(post.updatedAt)}</span>
+          )}
+          <span>{readingTime} min read</span>
         </div>
       </header>
 
@@ -118,10 +189,20 @@ export default async function ArticlePage({ params }: PageProps) {
       <div className="mx-auto mt-12 grid max-w-5xl gap-12 lg:grid-cols-[1fr_240px]">
         <div>
           <div
-            className="prose-article"
+            className="prose-article mx-auto max-w-[65ch] text-lg leading-[1.8]"
             dangerouslySetInnerHTML={{ __html: html }}
           />
-          <div className="mt-10 border-t border-charcoal/10 pt-8">
+          <div className="mx-auto mt-10 max-w-[65ch] rounded-lg border border-charcoal/10 bg-white p-6 shadow-elegant">
+            <h3 className="font-serif text-lg font-semibold text-charcoal">
+              WilloraNoor Editorial Team
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-charcoal/70">
+              Our editorial team curates premium home décor inspiration, blending
+              timeless design principles with practical guidance for beautiful
+              living spaces.
+            </p>
+          </div>
+          <div className="mx-auto mt-10 max-w-[65ch] border-t border-charcoal/10 pt-8">
             <ShareButtons
               url={`${siteUrl}/article/${post.slug}`}
               title={post.title}
@@ -130,12 +211,14 @@ export default async function ArticlePage({ params }: PageProps) {
         </div>
         {toc.length > 0 && (
           <aside className="hidden lg:block">
-            <div className="sticky top-8">
+            <div className="sticky top-24">
               <TableOfContents items={toc} />
             </div>
           </aside>
         )}
       </div>
+
+      <RelatedPosts categoryId={post.categoryId} excludePostId={post.id} />
     </article>
   );
 }

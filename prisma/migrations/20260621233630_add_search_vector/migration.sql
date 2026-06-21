@@ -1,4 +1,7 @@
 -- Add full-text search vector column to Post
+-- Note: Uses trigger-based updates (strips HTML, weights title/excerpt/content)
+-- which is more accurate than a plain GENERATED ALWAYS column on raw HTML content.
+-- Prisma cannot manage generated/tsvector columns directly.
 ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS search_vector tsvector;
 
 -- Create function to update search vector

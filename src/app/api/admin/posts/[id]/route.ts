@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveTagIds } from "@/lib/tags";
 import { postSchema } from "@/lib/validations";
 import { NextResponse } from "next/server";
 
@@ -57,6 +58,13 @@ export async function PUT(
 
   await prisma.postTag.deleteMany({ where: { postId: id } });
 
+  const tagIds = [
+    ...new Set([
+      ...data.tagIds,
+      ...(await resolveTagIds(data.tagNames)),
+    ]),
+  ];
+
   const post = await prisma.post.update({
     where: { id },
     data: {
@@ -73,9 +81,10 @@ export async function PUT(
         : null,
       metaTitle: data.metaTitle,
       metaDescription: data.metaDescription,
+      focusKeyword: data.focusKeyword,
       categoryId: data.categoryId,
       tags: {
-        create: data.tagIds.map((tagId) => ({ tagId })),
+        create: tagIds.map((tagId) => ({ tagId })),
       },
     },
     include: { category: true, tags: { include: { tag: true } } },

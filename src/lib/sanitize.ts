@@ -86,10 +86,11 @@ export function addHeadingIds(html: string): {
     }
 
     $el.attr("id", id);
+    const tagName = el.type === "tag" ? el.tagName : "h2";
     toc.push({
       id,
       text,
-      level: parseInt(el.tagName.replace("h", ""), 10),
+      level: parseInt(tagName.replace("h", ""), 10),
     });
   });
 

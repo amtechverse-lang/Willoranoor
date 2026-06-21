@@ -10,14 +10,19 @@ const prisma = new PrismaClient({ adapter });
 
 const categories = [
   {
+    name: "Bedroom",
+    slug: "bedroom",
+    description: "Serene retreats and bedroom styling ideas.",
+  },
+  {
     name: "Living Room",
     slug: "living-room",
     description: "Elegant living spaces and lounge design inspiration.",
   },
   {
-    name: "Bedroom",
-    slug: "bedroom",
-    description: "Serene retreats and bedroom styling ideas.",
+    name: "Dining Room",
+    slug: "dining-room",
+    description: "Refined dining spaces for memorable gatherings.",
   },
   {
     name: "Kitchen",
@@ -32,17 +37,12 @@ const categories = [
   {
     name: "Outdoor",
     slug: "outdoor",
-    description: "Patios, gardens, and alfresco living.",
+    description: "Patios, terraces, and alfresco living.",
   },
   {
-    name: "Lighting",
-    slug: "lighting",
-    description: "Illumination that transforms every room.",
-  },
-  {
-    name: "Seasonal",
-    slug: "seasonal",
-    description: "Holiday décor and seasonal styling guides.",
+    name: "Garden",
+    slug: "garden",
+    description: "Landscaping and garden design inspiration.",
   },
 ];
 
@@ -55,7 +55,7 @@ async function main() {
     create: {
       email: "admin@willoranoor.com",
       name: "Admin",
-      password: passwordHash,
+      passwordHash: passwordHash,
       role: "ADMIN",
     },
   });

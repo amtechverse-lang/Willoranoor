@@ -13,6 +13,7 @@ import {
   Bold,
   Heading2,
   Heading3,
+  Heading4,
   ImageIcon,
   Italic,
   Link as LinkIcon,
@@ -23,7 +24,8 @@ import {
   Table as TableIcon,
   Undo,
 } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +40,8 @@ export function TipTapEditor({
   onChange,
   placeholder = "Start writing your article…",
 }: TipTapEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -73,13 +77,32 @@ export function TipTapEditor({
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   }, [editor]);
 
+  const uploadImage = useCallback(
+    async (file: File) => {
+      if (!editor) return;
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        if (!res.ok) {
+          const err = await res.json();
+          toast.error(err.error ?? "Upload failed");
+          return;
+        }
+        const { url } = await res.json();
+        editor.chain().focus().setImage({ src: url }).run();
+        toast.success("Image uploaded");
+      } catch {
+        toast.error("Upload failed");
+      }
+    },
+    [editor],
+  );
+
   const addImage = useCallback(() => {
-    if (!editor) return;
-    const url = window.prompt("Image URL");
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
-  }, [editor]);
+    fileInputRef.current?.click();
+  }, []);
 
   if (!editor) return null;
 
@@ -107,6 +130,12 @@ export function TipTapEditor({
       action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
       active: editor.isActive("heading", { level: 3 }),
       label: "H3",
+    },
+    {
+      icon: Heading4,
+      action: () => editor.chain().focus().toggleHeading({ level: 4 }).run(),
+      active: editor.isActive("heading", { level: 4 }),
+      label: "H4",
     },
     {
       icon: List,
@@ -153,6 +182,17 @@ export function TipTapEditor({
 
   return (
     <div className="rounded-lg border border-charcoal/20 bg-white shadow-elegant">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) uploadImage(file);
+          e.target.value = "";
+        }}
+      />
       <div className="flex flex-wrap gap-1 border-b border-charcoal/10 p-2">
         {tools.map((tool) => (
           <Button
