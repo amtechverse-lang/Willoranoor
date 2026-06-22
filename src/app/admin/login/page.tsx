@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
                 id="password"
                 name="password"
                 type="password"
-                defaultValue="admin123"
+                placeholder="Enter your password"
                 required
               />
             </div>
