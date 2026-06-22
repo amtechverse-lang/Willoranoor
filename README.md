@@ -54,15 +54,17 @@ git push origin main
 
 ### Step 3 — Environment variables
 
-In Vercel → Project → Settings → Environment Variables, add:
+In Vercel → Project → **Settings** → **Environment Variables**, add these **before** deploying:
 
-| Variable | Value |
-|----------|-------|
-| `DATABASE_URL` | Neon PostgreSQL connection string (use **pooled** URL for serverless) |
-| `AUTH_SECRET` | Random 32+ character string ([generate](https://generate-secret.vercel.app/32)) |
-| `NEXTAUTH_SECRET` | Same value as `AUTH_SECRET` |
-| `NEXTAUTH_URL` | Your production URL, e.g. `https://willoranoor.vercel.app` |
-| `BLOB_READ_WRITE_TOKEN` | Auto-added if you enable **Vercel Blob** storage (required for image uploads) |
+| Variable | Value | Environments |
+|----------|-------|--------------|
+| `DATABASE_URL` | Neon PostgreSQL connection string (**direct/unpooled** URL recommended for migrations) | Production, Preview, Development |
+| `AUTH_SECRET` | Random 32+ character string | Production, Preview |
+| `NEXTAUTH_SECRET` | Same value as `AUTH_SECRET` | Production, Preview |
+| `NEXTAUTH_URL` | Your production URL, e.g. `https://willoranoor.vercel.app` | Production |
+| `BLOB_READ_WRITE_TOKEN` | Auto-added when you enable Vercel Blob | Production |
+
+> **Important:** If `DATABASE_URL` is missing, the Vercel build will fail at `prisma migrate deploy`. Add all variables, then click **Redeploy**.
 
 ### Step 4 — Enable Vercel Blob (for image uploads)
 
